@@ -1,11 +1,13 @@
-import express, { Application, Request, Response } from "express";
+import express, { Application, Request, Response, NextFunction } from "express";
 import bodyParser from "body-parser";
 import mongoose, { Promise } from "mongoose";
-import { User, IUser, Preferences, IPreferences } from "./mongoSchema";
+import passport from "passport"
 import { morganMiddleware } from "./utils/logger";
+import usersRouter from "./routers/usersRouter";
+import ResponseError from "./ResponseError";
+import { config } from "./config";
 
-const uri = 'mongodb://tester:' + encodeURIComponent("KwO9?$/q@HhZEf?PPzwM") + '@127.0.0.1:27017/test?authSource=admin';
-mongoose.connect(uri).then(
+mongoose.connect(config.mongoUrl).then(
   () => {
       console.log("Successfully connected to mongodb serever!");
   },
@@ -15,27 +17,27 @@ mongoose.connect(uri).then(
 });
 
 const app: Application = express();
-app.use(express.json());
 
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
 app.use(morganMiddleware);
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
+app.use(passport.initialize());
+app.use(bodyParser.json());
 
-app.get("/users", (req: Request, res: Response) => {
-  //res.send("Healthy");
-  res.json(User);
+const port = 3000;
+
+app.listen(port, () => {
+    console.log("Server listening at http://localhost:3000");
 });
 
-app.post("/users", (req: Request, res: Response) =>{
-  const user = {name: req.body.name, surname: req.body.surname, username: req.body.username}
-  //users.push(user);
-  User.insertMany(user);
-  res.status(201).send();
-});
+app.use('/user', usersRouter);
 
-
-const PORT = process.env.PORT || 8000;
-
-app.listen(PORT, () => {
-  console.log(`Server is running on PORT ${PORT}`);
-});
+app.use(function(err: ResponseError, req: Request, res: Response, next: NextFunction) {
+    // set locals, only providing error in development
+    res.locals.message = err.message;
+    res.locals.error = req.app.get('env') === 'development' ? err : {};
+  
+    // render the error page
+    res.status(err.status || 500);
+    res.json({ error: err })
+  });
