@@ -23,42 +23,37 @@ usersRouter.route('/')
 
 usersRouter.route('/login')
     .post((req: Request, res: Response, next: NextFunction): void => {
-        console.log("Inside Login");
         const userData = req.body;
-        try {
-            userModel.findOne({ "email": userData.email })
-            .then((user): void => {
-                if (user === null) {
-                    console.log("User not found");
-                    res.statusCode = 404;
-                    res.setHeader('Content-Type', 'text/plain');
-                    res.send("Wrong email");
-                } else {
-                    bcrypt.compare(userData.password, user.toJSON().password)
-                    .then((same: Boolean) => {
-                        if (same) {
-                            const token = getToken(user.toJSON());
-                            res.statusCode = 200;
-                            res.setHeader('Content-Type', 'application/json');
-                            res.json({ success: true, token: token, status: "You are successfully logged in!" });
-                        } else {
-                            res.sendStatus(403);
-                        }
-                    });
-                }
-            }, (err: ResponseError) => { next(err); } );
-        } catch (e) {
-            res.sendStatus(400);
-        }
+        userModel.findOne({ "email": userData.email })
+        .then((user): void => {
+            if (user === null) {
+                console.log("User not found");
+                res.statusCode = 404;
+                res.setHeader('Content-Type', 'text/plain');
+                res.send("Wrong email");
+            } else {
+                bcrypt.compare(userData.password, user.toJSON().password)
+                .then((same: Boolean) => {
+                    if (same) {
+                        const token = getToken(user.toJSON());
+                        res.statusCode = 200;
+                        res.setHeader('Content-Type', 'application/json');
+                        res.json({ success: true, token: token, status: "You are successfully logged in!" });
+                    } else {
+                        res.sendStatus(403);
+                    }
+                });
+            }
+        }, (err: ResponseError) => next(err) );
     });
 
 usersRouter.route('/signup')
     .post(function (req: Request, res: Response, next: NextFunction): void {
         console.log("In signup");
         const userData = req.body;
-        console.log("req.body: " + req.body.email);
-        console.log("req.header: " + JSON.stringify(req.headers));
-        bcrypt.genSalt(20)
+
+        console.log("req.body: " + JSON.stringify(req.body));
+        bcrypt.genSalt(10)
             .then((salt: string) => {
                 console.log("Generated salt: " + salt);
                 return bcrypt.hash(userData.password, salt)
@@ -78,7 +73,7 @@ usersRouter.route('/signup')
                     });
             }, (err: ResponseError) => next(err))
             .catch((err: ResponseError) => {
-                console.log(err);
+                console.log(err),
                     next(err);
             });
     });

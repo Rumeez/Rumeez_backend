@@ -23,10 +23,10 @@ app.use(passport.initialize());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-const port = 3000;
+const port = 8000;
 
 app.listen(port, () => {
-    console.log("Server listening at http://localhost:3000");
+    console.log("Server listening at http://localhost:" + port);
 });
 
 app.use('/user', usersRouter);
