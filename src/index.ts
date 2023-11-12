@@ -19,10 +19,9 @@ mongoose.connect(config.mongoUrl).then(
 const app: Application = express();
 
 app.use(morganMiddleware);
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
 app.use(passport.initialize());
-app.use(bodyParser.json());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 const port = 3000;
 

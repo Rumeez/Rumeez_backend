@@ -1,6 +1,7 @@
 To run a dev build, run
 
 npm run dev
+
 or
 
 npx ts-node-dev src/index.ts
