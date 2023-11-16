@@ -6,6 +6,7 @@ import { morganMiddleware } from "./utils/logger";
 import usersRouter from "./routers/usersRouter";
 import ResponseError from "./ResponseError";
 import { config } from "./config";
+import chatRouter from "./routers/chatRouter";
 
 mongoose.connect(config.mongoUrl).then(
   () => {
@@ -30,6 +31,7 @@ app.listen(port, () => {
 });
 
 app.use('/user', usersRouter);
+app.use('/chat', chatRouter);
 
 app.use(function(err: ResponseError, req: Request, res: Response, next: NextFunction) {
     // set locals, only providing error in development
