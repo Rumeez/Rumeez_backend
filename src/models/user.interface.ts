@@ -6,7 +6,10 @@ interface User {
   email: string;
   password: string;
   telnum: string;
+  gender: string;
   verified: boolean;
+  usersLiked?: Array<string>;
+  usersToRec?: Array<string>;
   preferences?: RoommatePreferences;
 }
 

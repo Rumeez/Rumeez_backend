@@ -7,6 +7,7 @@ import mongoose from 'mongoose';
 import ResponseError from '../ResponseError';
 import { FullJWT, jwtFromHeader } from '../authenticate';
 
+
 const usersRouter = express.Router();
 
 usersRouter.route('/')
@@ -16,7 +17,8 @@ usersRouter.route('/')
         if (validate.err) {
             next(validate.err);
         } else {
-            userModel.find({email: validate.token.payload.email})
+            userModel.find(
+                {email: validate.token.payload.email})
                 .then(function (users: any[]) {
                     res.statusCode = 200;
                     res.setHeader('Content-Type', 'application/json');

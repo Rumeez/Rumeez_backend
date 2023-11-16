@@ -24,10 +24,23 @@ const userSchema = new Schema<User>({
         type: String,
         default: ""
     },
+    gender: {
+        type: String,
+        default: ""
+    },
     verified: {
         type: Boolean,
         default: false
     },
+    usersLiked: {
+        type: Array<String>,
+        default: []
+    },
+    usersToRec:{
+    type: Array<String>,
+    default: []
+    },
+
     preferences: {
       type: new Schema<RoommatePreferences>(),
       required: false
