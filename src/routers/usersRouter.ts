@@ -6,6 +6,7 @@ import { getToken } from '../authenticate';
 import mongoose from 'mongoose';
 import ResponseError from '../ResponseError';
 import { FullJWT, jwtFromHeader } from '../authenticate';
+import preferencesModel from '../models/preferences.model';
 
 
 const usersRouter = express.Router();
@@ -71,10 +72,14 @@ usersRouter.route('/signup')
                 return bcrypt.hash(userData.password, salt)
                     .then((hash: string) => {
                         console.log("Hash: " + hash);
+                        return preferencesModel.create(userData.preferences)
+                        .then( ()=> {
                         return userModel.create({
                             ...userData,
+                            
                             password: hash
-                        });
+                        });})
+                        
                     })
                     .then((user: mongoose.Document) => {
                         res.send(user);

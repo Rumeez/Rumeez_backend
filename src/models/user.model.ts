@@ -1,6 +1,8 @@
 import mongoose, { Schema, Model } from 'mongoose';
 import User from './user.interface';
 import RoommatePreferences from './preferences.interface';
+import preferencesModel from './preferences.model';
+
  
 const userSchema = new Schema<User>({
     firstname: {
@@ -10,7 +12,7 @@ const userSchema = new Schema<User>({
     lastname: {
         type: String,
         required: true
-    },
+    }, 
     email: {
         type: String,
         unique: true,
@@ -33,16 +35,17 @@ const userSchema = new Schema<User>({
         default: false
     },
     usersLiked: {
-        type: Array<String>,
+        type: [String],
         default: []
     },
-    usersToRec:{
-    type: Array<String>,
-    default: []
+    usersSkipped:{
+        type: [String],
+        default: []
     },
 
     preferences: {
-      type: new Schema<RoommatePreferences>(),
+       
+      type: preferencesModel.schema,
       required: false
     }
 });
