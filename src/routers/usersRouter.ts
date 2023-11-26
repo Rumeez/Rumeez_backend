@@ -67,6 +67,10 @@ usersRouter.route('/signup')
     .post(function (req: Request, res: Response, next: NextFunction): void {
         console.log("In signup");
         const userData = req.body;
+        if (!userData.email) {
+            res.sendStatus(400);
+            return next();
+        }
 
         console.log("req.body: " + JSON.stringify(req.body));
         bcrypt.genSalt(10)
@@ -150,7 +154,7 @@ usersRouter.route('/verify')
                                         Data: `Dear ${validate.token.payload.firstname},\n\n
                                                 This is the link you requested for account verification.\n\n
                                                 If you did not request account verification, you can safely ignore this email. \n\n
-                                                Verification link: http://something.or.other/${verificationToken}\n\n
+                                                Verification link: http://localhost:3000/verification/${verificationToken}\n\n
                                                 Best,
                                                 The Rumeez Dev Team`
                                     }
@@ -199,6 +203,57 @@ usersRouter.route('/verify/confirm')
     });
 
 usersRouter.route('/accountrecovery')
+    .get((req: Request, res: Response, next: NextFunction): void => {
+        if (!req.body.email) {
+            const err: ResponseError = new Error("No email provided");
+            err.status = 400;
+            next(err);
+        } else {
+            const userEmail: string = req.body.email;
+            res.sendStatus(200);
+            userModel.findOne({ "email": userEmail })
+            .then((user: mongoose.Document | null): Promise<PromiseResult<AWS.SES.SendEmailResponse, AWS.AWSError>> | null => {
+                if (user) {
+                    const userJSON: any = user.toJSON();
+                    const recoveryToken: string = getTokenAccountRecovery(userJSON);
+                    const email: AWS.SES.SendEmailRequest = {
+                        Destination: { /* required */
+                            ToAddresses: [
+                                userEmail,
+                            ]
+                        },
+                        Message: { /* required */
+                            Body: { /* required */
+                                Text: {
+                                    Charset: "UTF-8",
+                                    Data: `Dear ${userJSON.firstname},\n\n
+                                            This is the link you requested for account recovery.\n\n
+                                            If you did not request account verification, you can safely ignore this email. \n\n
+                                            Token: http://localhost:3000/recovery/${recoveryToken}\n\n
+                                            Best,
+                                            The Rumeez Dev Team`
+                                }
+                            },
+                            Subject: {
+                                Charset: "UTF-8",
+                                Data: "Rumeez Account Recovery"
+                            }
+                        },
+                        Source: "no_reply_rumeez@proton.me", /* required */
+                    };
+                    return new AWS.SES({apiVersion: "2010-12-01"}).sendEmail(email).promise();
+                } else {
+                    return null;
+                }
+            })
+            .then((promiseResult: PromiseResult<AWS.SES.SendEmailResponse, AWS.AWSError> | null): void => {
+                console.log(promiseResult);
+            })
+            .catch((err: Error) => console.log(err));
+        }
+    })
+
+usersRouter.route('/accountrecovery/confirm')
     .post((req: Request, res: Response, next: NextFunction): void => {
         const auth: FullJWT = jwtFromHeader(req);
         if (auth.err) {
@@ -249,57 +304,6 @@ usersRouter.route('/accountrecovery')
             }).catch((err: Error) => next(err));
         }
     });
-
-usersRouter.route('/accountrecovery/gettoken')
-    .get((req: Request, res: Response, next: NextFunction): void => {
-        if (!req.body.email) {
-            const err: ResponseError = new Error("No email provided");
-            err.status = 400;
-            next(err);
-        } else {
-            const userEmail: string = req.body.email;
-            res.sendStatus(200);
-            userModel.findOne({ "email": userEmail })
-            .then((user: mongoose.Document | null): Promise<PromiseResult<AWS.SES.SendEmailResponse, AWS.AWSError>> | null => {
-                if (user) {
-                    const userJSON: any = user.toJSON();
-                    const recoveryToken: string = getTokenAccountRecovery(userJSON);
-                    const email: AWS.SES.SendEmailRequest = {
-                        Destination: { /* required */
-                            ToAddresses: [
-                                userEmail,
-                            ]
-                        },
-                        Message: { /* required */
-                            Body: { /* required */
-                                Text: {
-                                    Charset: "UTF-8",
-                                    Data: `Dear ${userJSON.firstname},\n\n
-                                            This is the link you requested for account recovery.\n\n
-                                            If you did not request account verification, you can safely ignore this email. \n\n
-                                            Token: http://localhost:3000/recovery/${recoveryToken}\n\n
-                                            Best,
-                                            The Rumeez Dev Team`
-                                }
-                            },
-                            Subject: {
-                                Charset: "UTF-8",
-                                Data: "Rumeez Account Recovery"
-                            }
-                        },
-                        Source: "no_reply_rumeez@proton.me", /* required */
-                    };
-                    return new AWS.SES({apiVersion: "2010-12-01"}).sendEmail(email).promise();
-                } else {
-                    return null;
-                }
-            })
-            .then((promiseResult: PromiseResult<AWS.SES.SendEmailResponse, AWS.AWSError> | null): void => {
-                console.log(promiseResult);
-            })
-            .catch((err: Error) => console.log(err));
-        }
-    })
 
 usersRouter.route('/passwordreset')
     .post(authStrategy, (req: Request, res: Response, next: NextFunction): void => {
