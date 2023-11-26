@@ -359,4 +359,11 @@ usersRouter.route('/passwordreset')
         }
     })
 
+usersRouter.route('/logout')
+    .get((req: Request, res: Response, next: NextFunction): void => {
+        res.setHeader('Content-Type', 'application/json');
+        res.clearCookie("token");
+        res.json({ success: true, status: "You are successfully logged out!" });
+    });
+
 export default usersRouter;
