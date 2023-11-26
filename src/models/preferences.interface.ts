@@ -1,13 +1,16 @@
+import { Document } from 'mongoose';
+
 interface RoommatePreferences {
-  dormType: string; //drop down 9 choices
-  numberOfRoommates: number; //drop down
+  dormType: string;
+  numberOfRoommates: number;
   genderOfRoomate: string;
-  smoking: boolean; //yes or no drop down
-  drinking: boolean; //yes or no drop down
-  riseTime: string;//drop down menu 
-  sleepTime: string; //drop down menu 
-  temp: string; //hot, cold, or medium drop down
-  
-};
+  smoking: boolean;
+  drinking: boolean;
+  riseTime: string;
+  sleepTime: string;
+  temp: string;
+}
+
+export interface RoommatePreferencesDocument extends RoommatePreferences, Document {}
 
 export default RoommatePreferences;
