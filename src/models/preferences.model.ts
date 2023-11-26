@@ -1,5 +1,5 @@
 import mongoose, { Schema, Model } from 'mongoose';
-import RoommatePreferences, { RoommatePreferencesDocument } from './preferences.interface';
+import RoommatePreferencesDocument from './preferences.interface';
 
 const preferencesSchema = new Schema<RoommatePreferencesDocument>({
   dormType: { type: String },

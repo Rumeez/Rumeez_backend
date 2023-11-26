@@ -2,7 +2,6 @@ import express, { NextFunction, Request, Response, response } from 'express';
 import userModel from '../models/user.model';
 import passport from 'passport';
 import bcrypt from 'bcrypt';
-import { getToken } from '../authenticate';
 import mongoose from 'mongoose';
 import ResponseError from '../ResponseError';
 import { FullJWT, jwtFromHeader } from '../authenticate';
