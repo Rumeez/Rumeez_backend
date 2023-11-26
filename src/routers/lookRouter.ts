@@ -4,7 +4,7 @@ import passport from 'passport';
 import bcrypt from 'bcrypt';
 import mongoose from 'mongoose';
 import ResponseError from '../ResponseError';
-import { FullJWT, jwtFromHeader } from '../authenticate';
+import { FullJWT, jwtFromHeader, jwtFromCookie } from '../authenticate';
 import { MongoClient, ObjectId, Db, Collection } from 'mongodb';
 import User from '../models/user.interface';
 import { config } from "../config";
@@ -17,7 +17,7 @@ const lookRouter = express.Router();
 lookRouter.route('/')
     .get(passport.authenticate('jwt', {session: false}), async function (req: Request, res: Response, next: NextFunction): Promise<void> {
         console.log("Inside GET");
-        const validate: FullJWT = jwtFromHeader(req);
+        const validate: FullJWT = jwtFromCookie(req);
         if (validate.err) {
             next(validate.err);
         } else {

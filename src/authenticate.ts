@@ -117,11 +117,21 @@ function isFullJWT(obj: any): boolean {
     }
 }
 
-export const jwtFromHeader = function(req: Request) : FullJWT {
-    const token: string | undefined = req.headers.authorization;
+export const jwtFromHeader = function (req: Request): FullJWT {
     if (req.headers.authorization) {
         console.log("Before verify");
         return jwtFromString(req.headers.authorization);
+    } else {
+        const err: ResponseError = new Error("Bad JWT Token");
+        err.status = 400;
+        return {token: EmptyToken, err: err};
+    }
+}
+
+export const jwtFromCookie = function (req: Request): FullJWT {
+    if (req.cookies.token) {
+        console.log("Before verify");
+        return jwtFromString(req.cookies.token);
     } else {
         const err: ResponseError = new Error("Bad JWT Token");
         err.status = 400;

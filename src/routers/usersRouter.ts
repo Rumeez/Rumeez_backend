@@ -4,7 +4,7 @@ import passport from 'passport';
 import bcrypt from 'bcrypt';
 import mongoose, { ObjectId } from 'mongoose';
 import ResponseError from '../ResponseError';
-import { FullJWT, jwtFromHeader, getTokenAccountVerification, getTokenLogin, getTokenAccountRecovery } from '../authenticate';
+import { FullJWT, jwtFromHeader, getTokenAccountVerification, getTokenLogin, getTokenAccountRecovery, jwtFromCookie } from '../authenticate';
 import preferencesModel from '../models/preferences.model';
 import RoommatePreferences from '../models/preferences.interface';
 import User from '../models/user.interface';
@@ -20,7 +20,7 @@ const usersRouter = express.Router();
 usersRouter.route('/')
     .get(passport.authenticate('jwt', { session: false }), function (req: Request, res: Response, next: NextFunction): void {
         console.log("Inside GET");
-        const validate: FullJWT = jwtFromHeader(req);
+        const validate: FullJWT = jwtFromCookie(req);
         if (validate.err) {
             next(validate.err);
         } else {
@@ -57,7 +57,8 @@ usersRouter.route('/login')
                                 const token = getTokenLogin(user);
                                 res.statusCode = 200;
                                 res.setHeader('Content-Type', 'application/json');
-                                res.json({ success: true, token: token, status: "You are successfully logged in!" });
+                                res.json({ success: true, status: "You are successfully logged in!" });
+                                res.cookie("token", token);
                             } else {
                                 res.sendStatus(403);
                             }
@@ -104,7 +105,7 @@ usersRouter.route('/signup')
 
 usersRouter.route('/update-preferences')
     .post(passport.authenticate('jwt', { session: false }), function (req: Request, res: Response, next: NextFunction): void {
-        const validate: FullJWT = jwtFromHeader(req);
+        const validate: FullJWT = jwtFromCookie(req);
         if (validate.err) {
             next(validate.err);
         } else {
@@ -135,7 +136,7 @@ usersRouter.route('/update-preferences')
 
 usersRouter.route('/verify')
     .get(passport.authenticate('jwt', { session: false }), function (req: Request, res: Response, next: NextFunction): void {
-        const validate: FullJWT = jwtFromHeader(req);
+        const validate: FullJWT = jwtFromCookie(req);
         if (validate.err) {
             next(validate.err);
         } else {
@@ -191,7 +192,7 @@ usersRouter.route('/verify/confirm')
         if (validate.err) {
             next(validate.err);
         } else if (validate.token.payload.permissions.verifyaccount) {
-            userModel.findOneAndUpdate({"email":validate.token.payload.email}, {$set: {verified: true}})
+            userModel.findOneAndUpdate({"email": validate.token.payload.email}, {$set: {verified: true}})
             .then((user: mongoose.Document | null): void => {
                 console.log("User: " + user);
                 if (user) {
@@ -314,7 +315,7 @@ usersRouter.route('/accountrecovery/gettoken')
 usersRouter.route('/passwordreset')
     .post(passport.authenticate('jwt', { session: false }), (req: Request, res: Response, next: NextFunction): void => {
         console.log("In password reset");
-        const auth: FullJWT = jwtFromHeader(req);
+        const auth: FullJWT = jwtFromCookie(req);
         console.log("auth: " + JSON.stringify(auth));
         console.log("Token: " + JSON.stringify(auth.token));
         if (auth.err) {
