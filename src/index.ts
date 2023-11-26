@@ -6,8 +6,12 @@ import { morganMiddleware } from "./utils/logger";
 import usersRouter from "./routers/usersRouter";
 import ResponseError from "./ResponseError";
 import { config } from "./config";
-import chatRouter from "./routers/chatRouter";
 import lookRouter from "./routers/lookRouter";
+
+import http from 'http';
+import { initSocket } from './socket';
+
+
 mongoose.connect(config.mongoUrl).then(
   () => {
       console.log("Successfully connected to mongodb serever!");
@@ -19,6 +23,9 @@ mongoose.connect(config.mongoUrl).then(
 
 const app: Application = express();
 
+const server = http.createServer(app);
+const io = initSocket(server);
+
 app.use(morganMiddleware);
 app.use(passport.initialize());
 app.use(express.json());
@@ -26,9 +33,11 @@ app.use(express.urlencoded({ extended: true }));
 
 const port = 8000;
 
-app.listen(port, () => {
+server.listen(port, () => {
     console.log("Server listening at http://localhost:" + port);
 });
+
+import chatRouter from "./routers/chatRouter"; //weird import location due to socket.io needing to be iitialized before the import.
 
 app.use('/user', usersRouter);
 app.use('/chat', chatRouter);
@@ -43,3 +52,5 @@ app.use(function(err: ResponseError, req: Request, res: Response, next: NextFunc
     res.status(err.status || 500);
     res.json({ error: err })
   });
+
+  export { io }

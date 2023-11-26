@@ -4,7 +4,7 @@ interface chat {
     chatName?: string;
     isGroupChat: boolean;
     users: User[];
-    messages: string[];
+    messages: string[][];
 }
 
 export default chat;

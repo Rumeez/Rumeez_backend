@@ -15,11 +15,11 @@ const chatSchema = new Schema<chat>({
     users: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",
-        required: true,
+        required: false,
     }],
     messages: 
     {
-        type: [String],
+        type: [[String]],
         required: false,
     }
 });
