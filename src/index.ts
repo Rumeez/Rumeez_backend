@@ -8,6 +8,8 @@ import ResponseError from "./ResponseError";
 import { config } from "./config";
 import chatRouter from "./routers/chatRouter";
 import lookRouter from "./routers/lookRouter";
+import cookieParser from "cookie-parser"
+
 mongoose.connect(config.mongoUrl).then(
   () => {
       console.log("Successfully connected to mongodb serever!");
@@ -23,6 +25,7 @@ app.use(morganMiddleware);
 app.use(passport.initialize());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
 
 const port = 8000;
 

@@ -4,7 +4,7 @@ import passport from 'passport';
 import bcrypt from 'bcrypt';
 import mongoose from 'mongoose';
 import ResponseError from '../ResponseError';
-import { FullJWT, jwtFromHeader, jwtFromCookie } from '../authenticate';
+import { FullJWT, jwtFromHeader, jwtFromCookie, authStrategy } from '../authenticate';
 import { MongoClient, ObjectId, Db, Collection } from 'mongodb';
 import User from '../models/user.interface';
 import { config } from "../config";
@@ -15,31 +15,28 @@ const lookRouter = express.Router();
 
 //check if users like or users skipped
 lookRouter.route('/')
-    .get(passport.authenticate('jwt', {session: false}), async function (req: Request, res: Response, next: NextFunction): Promise<void> {
+    .get(authStrategy, async function (req: Request, res: Response, next: NextFunction): Promise<void> {
         console.log("Inside GET");
         const validate: FullJWT = jwtFromCookie(req);
-        if (validate.err) {
-            next(validate.err);
-        } else {
-            try {
-                const user = await userModel.findOne({ email: validate.token.payload.email });
-            
+        try {
+            const user = await userModel.findOne({ email: validate.token.payload.email });
+        
 
-                if (user) {
-                  const rankedResults = await rankDocuments(user);
-                  res.status(200).json(rankedResults);
-                  console.log('Successfully found and ranked documents');
-                } else {
-                  // Handle the case when no user is found
-                  res.status(404).json({ message: 'User not found' });
-                }
-              } catch (err) {
-                // Handle errors
-                next(err);}
-   } });
+            if (user) {
+              const rankedResults = await rankDocuments(user);
+              res.status(200).json(rankedResults);
+              console.log('Successfully found and ranked documents');
+            } else {
+              // Handle the case when no user is found
+              res.status(404).json({ message: 'User not found' });
+            }
+          } catch (err) {
+            // Handle errors
+            next(err);}
+   });
 
 lookRouter.route('/getuser/:userid')
-   .get(passport.authenticate('jwt', {session: false}), async function (req: Request, res: Response, next: NextFunction): Promise<void> {
+   .get(authStrategy, async function (req: Request, res: Response, next: NextFunction): Promise<void> {
     const userid = req.params.userid;
     const user = await userModel.findById(userid).exec();
     res.json(user);
@@ -47,7 +44,7 @@ lookRouter.route('/getuser/:userid')
 
 
 lookRouter.route('/like/:userid/:userToLikeId')
-    .post(passport.authenticate('jwt', {session: false}), async function (req: Request, res: Response, next: NextFunction): Promise<void> {
+    .post(authStrategy, async function (req: Request, res: Response, next: NextFunction): Promise<void> {
     //in here read the body, which should be the user id that was like or disliked
     //remove from userToRec and 
     const userId = req.params.userid;
@@ -76,7 +73,7 @@ lookRouter.route('/like/:userid/:userToLikeId')
  
 
     lookRouter.route('/skip/:userid/:userToSkipId')
-    .post(passport.authenticate('jwt', {session: false}), async function (req: Request, res: Response, next: NextFunction): Promise<void> {
+    .post(authStrategy, async function (req: Request, res: Response, next: NextFunction): Promise<void> {
       
       const userId = req.params.userid;
       const userToSkipId = req.params.userToSkipId;

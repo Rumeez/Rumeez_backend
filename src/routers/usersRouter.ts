@@ -4,7 +4,7 @@ import passport from 'passport';
 import bcrypt from 'bcrypt';
 import mongoose, { ObjectId } from 'mongoose';
 import ResponseError from '../ResponseError';
-import { FullJWT, jwtFromHeader, getTokenAccountVerification, getTokenLogin, getTokenAccountRecovery, jwtFromCookie } from '../authenticate';
+import { FullJWT, jwtFromHeader, getTokenAccountVerification, getTokenLogin, getTokenAccountRecovery, jwtFromCookie, authStrategy } from '../authenticate';
 import preferencesModel from '../models/preferences.model';
 import RoommatePreferences from '../models/preferences.interface';
 import User from '../models/user.interface';
@@ -18,22 +18,18 @@ AWS.config.update({region: 'us-east-2', credentials: credentials});
 const usersRouter = express.Router();
 
 usersRouter.route('/')
-    .get(passport.authenticate('jwt', { session: false }), function (req: Request, res: Response, next: NextFunction): void {
+    .get(authStrategy, function (req: Request, res: Response, next: NextFunction): void {
         console.log("Inside GET");
         const validate: FullJWT = jwtFromCookie(req);
-        if (validate.err) {
-            next(validate.err);
-        } else {
-            userModel.find(
-                { email: validate.token.payload.email })
-                .then(function (users: User[]) {
-                    res.statusCode = 200;
-                    res.setHeader('Content-Type', 'application/json');
-                    res.json(users);
-                    console.log("Successfully found users");
-                }, function (err: ResponseError) { next(err) })
-                .catch(function (err: ResponseError) { next(err) });
-        }
+        userModel.find(
+            { email: validate.token.payload.email })
+            .then(function (users: User[]) {
+                res.statusCode = 200;
+                res.setHeader('Content-Type', 'application/json');
+                res.json(users);
+                console.log("Successfully found users");
+            }, function (err: ResponseError) { next(err) })
+            .catch(function (err: ResponseError) { next(err) });
     });
 
 usersRouter.route('/login')
@@ -57,8 +53,8 @@ usersRouter.route('/login')
                                 const token = getTokenLogin(user);
                                 res.statusCode = 200;
                                 res.setHeader('Content-Type', 'application/json');
-                                res.json({ success: true, status: "You are successfully logged in!" });
                                 res.cookie("token", token);
+                                res.json({ success: true, status: "You are successfully logged in!" });
                             } else {
                                 res.sendStatus(403);
                             }
@@ -104,94 +100,87 @@ usersRouter.route('/signup')
     });
 
 usersRouter.route('/update-preferences')
-    .post(passport.authenticate('jwt', { session: false }), function (req: Request, res: Response, next: NextFunction): void {
+    .post(authStrategy, function (req: Request, res: Response, next: NextFunction): void {
         const validate: FullJWT = jwtFromCookie(req);
-        if (validate.err) {
-            next(validate.err);
-        } else {
-            try {
-                const pref: RoommatePreferences = {
-                    dormType: req.body.dormType, //drop down 9 choices
-                    numberOfRoommates: Number(req.body.numberOfRoommates), //drop down
-                    genderOfRoomate: req.body.genderOfRoomate,
-                    smoking: Boolean(req.body.smoking), //yes or no drop down
-                    drinking: Boolean(req.body.drinking), //yes or no drop down
-                    riseTime: req.body.riseTime,//drop down menu 
-                    sleepTime: req.body.sleepTime, //drop down menu 
-                    temp: req.body.temp, //hot, cold, or medium drop down
-                }
-                userModel.updateOne(
-                    { email: validate.token.payload.email },
-                    { preferences: pref })
-                    .then(function () {
-                        res.sendStatus(200);
-                        console.log("Successfully found users");
-                    }, function (err: ResponseError) { next(err) })
-                    .catch(function (err: ResponseError) { next(err) });
-            } catch {
-                res.sendStatus(400);
+        try {
+            const pref: RoommatePreferences = {
+                dormType: req.body.dormType, //drop down 9 choices
+                numberOfRoommates: Number(req.body.numberOfRoommates), //drop down
+                genderOfRoomate: req.body.genderOfRoomate,
+                smoking: Boolean(req.body.smoking), //yes or no drop down
+                drinking: Boolean(req.body.drinking), //yes or no drop down
+                riseTime: req.body.riseTime,//drop down menu 
+                sleepTime: req.body.sleepTime, //drop down menu 
+                temp: req.body.temp, //hot, cold, or medium drop down
             }
+            userModel.updateOne(
+                { email: validate.token.payload.email },
+                { preferences: pref })
+                .then(function () {
+                    res.sendStatus(200);
+                    console.log("Successfully found users");
+                }, function (err: ResponseError) { next(err) })
+                .catch(function (err: ResponseError) { next(err) });
+        } catch {
+            res.sendStatus(400);
         }
     });
 
 usersRouter.route('/verify')
-    .get(passport.authenticate('jwt', { session: false }), function (req: Request, res: Response, next: NextFunction): void {
+    .get(authStrategy, function (req: Request, res: Response, next: NextFunction): void {
         const validate: FullJWT = jwtFromCookie(req);
-        if (validate.err) {
-            next(validate.err);
-        } else {
-            try {
-                userModel.findOne({ email: validate.token.payload.email })
-                    .then((user: mongoose.Document | null): Promise<PromiseResult<AWS.SES.SendEmailResponse, AWS.AWSError>> | null => {
-                        if (user === null) {
-                            return null;
-                        } else {
-                            const userJSON: any = user.toJSON();
-                            const verificationToken: string = getTokenAccountVerification(userJSON);
-                            const email: AWS.SES.SendEmailRequest = {
-                                Destination: { /* required */
-                                    ToAddresses: [
-                                        validate.token.payload.email,
-                                    ]
-                                },
-                                Message: { /* required */
-                                    Body: { /* required */
-                                        Text: {
-                                            Charset: "UTF-8",
-                                            Data: `Dear ${validate.token.payload.firstname},\n\n
-                                                    This is the link you requested for account verification.\n\n
-                                                    If you did not request account verification, you can safely ignore this email. \n\n
-                                                    Verification link: http://something.or.other/${verificationToken}\n\n
-                                                    Best,
-                                                    The Rumeez Dev Team`
-                                        }
-                                    },
-                                    Subject: {
+        try {
+            userModel.findOne({ email: validate.token.payload.email })
+                .then((user: mongoose.Document | null): Promise<PromiseResult<AWS.SES.SendEmailResponse, AWS.AWSError>> | null => {
+                    if (user === null) {
+                        return null;
+                    } else {
+                        const userJSON: any = user.toJSON();
+                        const verificationToken: string = getTokenAccountVerification(userJSON);
+                        const email: AWS.SES.SendEmailRequest = {
+                            Destination: { /* required */
+                                ToAddresses: [
+                                    validate.token.payload.email,
+                                ]
+                            },
+                            Message: { /* required */
+                                Body: { /* required */
+                                    Text: {
                                         Charset: "UTF-8",
-                                        Data: "Rummez Account Verification"
+                                        Data: `Dear ${validate.token.payload.firstname},\n\n
+                                                This is the link you requested for account verification.\n\n
+                                                If you did not request account verification, you can safely ignore this email. \n\n
+                                                Verification link: http://something.or.other/${verificationToken}\n\n
+                                                Best,
+                                                The Rumeez Dev Team`
                                     }
                                 },
-                                Source: "no_reply_rumeez@proton.me", /* required */
-                            };
-                            return new AWS.SES({apiVersion: "2010-12-01"}).sendEmail(email).promise();
-                        }
-                    }, function (err: ResponseError) { next(err) })
-                    .then((promiseResult: PromiseResult<AWS.SES.SendEmailResponse, AWS.AWSError> | null | void): void => {
-                        res.sendStatus(200);
-                    })
-                    .catch(function (err: ResponseError) { next(err) })
-            } catch {
-                res.sendStatus(400);
-            }
+                                Subject: {
+                                    Charset: "UTF-8",
+                                    Data: "Rummez Account Verification"
+                                }
+                            },
+                            Source: "no_reply_rumeez@proton.me", /* required */
+                        };
+                        return new AWS.SES({apiVersion: "2010-12-01"}).sendEmail(email).promise();
+                    }
+                }, function (err: ResponseError) { next(err) })
+                .then((promiseResult: PromiseResult<AWS.SES.SendEmailResponse, AWS.AWSError> | null | void): void => {
+                    res.sendStatus(200);
+                })
+                .catch(function (err: ResponseError) { next(err) })
+        } catch {
+            res.sendStatus(400);
         }
     });
 
 usersRouter.route('/verify/confirm')
-    .post(passport.authenticate('jwt', { session: false }), function (req: Request, res: Response, next: NextFunction): void {
+    .post(authStrategy, function (req: Request, res: Response, next: NextFunction): void {
         const validate: FullJWT = jwtFromHeader(req);
         if (validate.err) {
-            next(validate.err);
-        } else if (validate.token.payload.permissions.verifyaccount) {
+            return next(validate.err);
+        }
+        if (validate.token.payload.permissions.verifyaccount) {
             userModel.findOneAndUpdate({"email": validate.token.payload.email}, {$set: {verified: true}})
             .then((user: mongoose.Document | null): void => {
                 console.log("User: " + user);
@@ -313,15 +302,11 @@ usersRouter.route('/accountrecovery/gettoken')
     })
 
 usersRouter.route('/passwordreset')
-    .post(passport.authenticate('jwt', { session: false }), (req: Request, res: Response, next: NextFunction): void => {
+    .post(authStrategy, (req: Request, res: Response, next: NextFunction): void => {
         console.log("In password reset");
         const auth: FullJWT = jwtFromCookie(req);
         console.log("auth: " + JSON.stringify(auth));
         console.log("Token: " + JSON.stringify(auth.token));
-        if (auth.err) {
-            console.log(auth.err);
-            return next(auth.err);
-        }
         const token: FullJWT["token"] = auth.token;
         if (!token.payload.permissions.passwordreset) {
             const err: ResponseError = new Error("Unauthorized");

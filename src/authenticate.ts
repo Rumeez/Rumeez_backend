@@ -5,22 +5,18 @@ import jwt from 'jsonwebtoken';
 import passportJwt, { ExtractJwt, VerifiedCallback, VerifyCallback } from 'passport-jwt';
 import { config } from './config';
 import ResponseError from './ResponseError';
-import { Request } from 'express';
+import { Request, Response, NextFunction } from 'express';
 
-const opts: passportJwt.StrategyOptions = {
-    jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-    secretOrKey: config.secretKey
-};
-
-const Strategy: VerifyCallback = (payload: any, done: VerifiedCallback): void => {
-    console.log("Strategy used");
-    console.log("Payload: " + JSON.stringify(payload));
-    done(null, payload);
+export const authStrategy = function (req: Request, res: Response, next: NextFunction): void {
+    console.log("Strat");
+    const validate: FullJWT = jwtFromCookie(req);
+    if (validate.err) {
+        res.sendStatus(401);
+        next(validate.err);
+    } else {
+        next();
+    }
 }
-
-const JwtStrategy: PassportStrategy = new passportJwt.Strategy(opts, Strategy);
-
-passport.use(JwtStrategy);
 
 interface GetToken {
     (user: User): string;
@@ -120,7 +116,7 @@ function isFullJWT(obj: any): boolean {
 export const jwtFromHeader = function (req: Request): FullJWT {
     if (req.headers.authorization) {
         console.log("Before verify");
-        return jwtFromString(req.headers.authorization);
+        return jwtFromString(req.headers.authorization.split(' ')[1]);
     } else {
         const err: ResponseError = new Error("Bad JWT Token");
         err.status = 400;
@@ -141,8 +137,8 @@ export const jwtFromCookie = function (req: Request): FullJWT {
 
 export const jwtFromString = function(token: string): FullJWT {
     try {
-        console.log("token: " + token.split(' ')[1]);
-        const decryptedToken: string | object = jwt.verify(token.split(' ')[1], config.secretKey, {complete: true});
+        console.log("token: " + token);
+        const decryptedToken: string | object = jwt.verify(token, config.secretKey, {complete: true});
         console.log("Made it past verify");
         if (typeof decryptedToken === "object") {
             console.log("Obj");
