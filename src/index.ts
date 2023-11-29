@@ -7,16 +7,12 @@ import usersRouter from "./routers/usersRouter";
 import ResponseError from "./ResponseError";
 import { config } from "./config";
 import lookRouter from "./routers/lookRouter";
-<<<<<<< HEAD
-
 import http from 'http';
 import { initSocket } from './socket';
 
-=======
 import searchRouter from "./routers/searchRouter"
 import cookieParser from "cookie-parser"
 import cors from 'cors';
->>>>>>> baca24d353f441bfbcb0124fbadde2b76ad124d4
 
 mongoose.connect(config.mongoUrl).then(
   () => {
