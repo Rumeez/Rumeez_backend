@@ -22,6 +22,7 @@ io.on('connection', (socket: Socket) => {
         console.log(`User ${socket.id} joined chat ${chatId}`);
     });
 
+});
 
 const messageInput = "this is a test chat" //document.getElementById('name of element that contains the message to send')
 
@@ -52,7 +53,7 @@ chatRouter.route('/create')
             ...chatData,
         })
         .then((chat: mongoose.Document) => {
-            res.send(chat);
+            res.send(chat._id);
         }, (err: ResponseError) => next(err))
 
     });
