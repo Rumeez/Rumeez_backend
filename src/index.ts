@@ -29,7 +29,6 @@ const server = http.createServer(app);
 const io = initSocket(server);
 
 app.use(morganMiddleware);
-app.use(passport.initialize());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());

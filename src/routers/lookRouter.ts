@@ -26,9 +26,11 @@ lookRouter.route('/')
               const rankedResults = await rankDocuments(user);
               res.status(200).json(rankedResults);
               console.log('Successfully found and ranked documents');
+              return;
             } else {
               // Handle the case when no user is found
               res.status(404).json({ message: 'User not found' });
+              return;
             }
           } catch (err) {
             // Handle errors
