@@ -12,7 +12,7 @@ export const authStrategy = function (req: Request, res: Response, next: NextFun
     const validate: FullJWT = jwtFromCookie(req);
     if (validate.err) {
         res.sendStatus(401);
-        next(validate.err);
+        // next(validate.err);
     } else {
         next();
     }
