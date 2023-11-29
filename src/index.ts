@@ -33,8 +33,10 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(cors({
-  origin: 'http://localhost:3000', 
+  origin: ['http://localhost:3000', 'http://127.0.0.1:3000'], 
   methods: 'GET, POST, OPTIONS',
+  credentials: true,
+  exposedHeaders: 'Set-Cookie'
 }));
 
 const port = 8000;
@@ -42,6 +44,8 @@ const port = 8000;
 server.listen(port, () => {
     console.log("Server listening at http://localhost:" + port);
 });
+
+app.set('trust proxy', process.env.NODE_ENV !== 'production');
 
 import chatRouter from "./routers/chatRouter"; //weird import location due to socket.io needing to be iitialized before the import.
 
