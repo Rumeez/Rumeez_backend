@@ -21,13 +21,15 @@ usersRouter.route('/')
     .get(authStrategy, function (req: Request, res: Response, next: NextFunction): void {
         console.log("Inside GET");
         const validate: FullJWT = jwtFromCookie(req);
-        userModel.find(
+        userModel.findOne(
             { email: validate.token.payload.email })
-            .then(function (users: User[]) {
-                res.statusCode = 200;
-                res.setHeader('Content-Type', 'application/json');
-                res.json(users);
-                console.log("Successfully found users");
+            .then(function (user: User | null) {
+                if (user) {
+                    res.statusCode = 200;
+                    res.setHeader('Content-Type', 'application/json');
+                    res.json({email: user.email, firstname: user.firstname, lastname: user.lastname, verified: user.verified});
+                    console.log("Successfully found user");
+                }
             }, function (err: ResponseError) { next(err) })
             .catch(function (err: ResponseError) { next(err) });
     });
@@ -53,8 +55,9 @@ usersRouter.route('/login')
                                 const token = getTokenLogin(user);
                                 res.statusCode = 200;
                                 res.setHeader('Content-Type', 'application/json');
-                                res.cookie("token", token);
-                                res.json({ success: true, status: "You are successfully logged in!" });
+                                res.setHeader('Access-Control-Allow-Credentials', "true");
+                                res.cookie("token", token, {sameSite:'none', /*domain:'api.app.localhost',*/ secure:true, path:"/", maxAge:3600000});
+                                res.json({email: user.email, firstname: user.firstname, lastname: user.lastname, verified: user.verified});
                             } else {
                                 res.sendStatus(403);
                             }
@@ -89,7 +92,7 @@ usersRouter.route('/signup')
                             })
 
                     })
-                    .then((user: mongoose.Document) => {
+                    .then((user: User) => {
                         res.send(user);
                     }, (err: ResponseError) => next(err))
                     .catch((err: ResponseError) => {
@@ -135,7 +138,7 @@ usersRouter.route('/verify')
         const validate: FullJWT = jwtFromCookie(req);
         try {
             userModel.findOne({ email: validate.token.payload.email })
-                .then((user: mongoose.Document | null): Promise<PromiseResult<AWS.SES.SendEmailResponse, AWS.AWSError>> | null => {
+                .then((user: User | null): Promise<PromiseResult<AWS.SES.SendEmailResponse, AWS.AWSError>> | null => {
                     if (user === null) {
                         return null;
                     } else {
@@ -186,7 +189,7 @@ usersRouter.route('/verify/confirm')
         }
         if (validate.token.payload.permissions.verifyaccount) {
             userModel.findOneAndUpdate({"email": validate.token.payload.email}, {$set: {verified: true}})
-            .then((user: mongoose.Document | null): void => {
+            .then((user: User | null): void => {
                 console.log("User: " + user);
                 if (user) {
                     res.sendStatus(200);
@@ -212,7 +215,7 @@ usersRouter.route('/accountrecovery')
             const userEmail: string = req.body.email;
             res.sendStatus(200);
             userModel.findOne({ "email": userEmail })
-            .then((user: mongoose.Document | null): Promise<PromiseResult<AWS.SES.SendEmailResponse, AWS.AWSError>> | null => {
+            .then((user: User | null): Promise<PromiseResult<AWS.SES.SendEmailResponse, AWS.AWSError>> | null => {
                 if (user) {
                     const userJSON: any = user.toJSON();
                     const recoveryToken: string = getTokenAccountRecovery(userJSON);
@@ -278,7 +281,7 @@ usersRouter.route('/accountrecovery/confirm')
             })
             .then((hash: string): void => {
                 userModel.findOne({ "email": token.payload.email })
-                .then((user: mongoose.Document | null): mongoose.Query<mongoose.Document | null, mongoose.Document, {}> => {
+                .then((user: User | null): mongoose.Query<User | null, User, {}> => {
                     if (!user) {
                         const err: ResponseError = new Error("User does not exist");
                         err.status = 400;
@@ -292,7 +295,7 @@ usersRouter.route('/accountrecovery/confirm')
                         });
                     }
                 })
-                .then((user: mongoose.Document | null): void => {
+                .then((user: User | null): void => {
                     if (user) {
                         res.sendStatus(200);
                     } else {
@@ -323,7 +326,7 @@ usersRouter.route('/passwordreset')
             const email: string = token.payload.email;
             console.log("All conditions met");
             userModel.findOne({"email": email})
-                .then((user: mongoose.Document | null): void => {
+                .then((user: User | null): void => {
                     if (user) {
                         bcrypt.compare(curPassword, user.toJSON().password)
                             .then((match: boolean): void => {
@@ -332,12 +335,12 @@ usersRouter.route('/passwordreset')
                                     .then((salt: string): Promise<string> => {
                                         return bcrypt.hash(newPassword, salt);
                                     })
-                                    .then((hash: string): mongoose.Query<mongoose.Document | null, mongoose.Document, {}> => {
+                                    .then((hash: string): mongoose.Query<User | null, User, {}> => {
                                         return userModel.findOneAndUpdate({"email":email}, {$set:{
                                             password: hash
                                         }})
                                     })
-                                    .then((user: mongoose.Document | null): void => {
+                                    .then((user: User | null): void => {
                                         if (user) {
                                             res.sendStatus(200);
                                         } else {

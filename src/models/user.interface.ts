@@ -2,7 +2,7 @@ import RoommatePreferences from "./preferences.interface";
 import mongoose from "mongoose";
 import {ObjectId}  from 'mongodb';
 
-interface User {
+interface User extends mongoose.Document {
   _id: ObjectId;
   firstname: string;
   lastname: string;
