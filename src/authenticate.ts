@@ -5,33 +5,73 @@ import jwt from 'jsonwebtoken';
 import passportJwt, { ExtractJwt, VerifiedCallback, VerifyCallback } from 'passport-jwt';
 import { config } from './config';
 import ResponseError from './ResponseError';
-import { Request } from 'express';
+import { Request, Response, NextFunction } from 'express';
 
-const opts: passportJwt.StrategyOptions = {
-    jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-    secretOrKey: config.secretKey
-};
-
-const Strategy: VerifyCallback = (payload: any, done: VerifiedCallback): void => {
-    console.log("Strategy used");
-    console.log("Payload: " + JSON.stringify(payload));
-    done(null, payload);
+export const authStrategy = function (req: Request, res: Response, next: NextFunction): void {
+    console.log("Strat");
+    const validate: FullJWT = jwtFromCookie(req);
+    if (validate.err) {
+        res.sendStatus(401);
+        next(validate.err);
+    } else {
+        next();
+    }
 }
-
-const JwtStrategy: PassportStrategy = new passportJwt.Strategy(opts, Strategy);
-
-passport.use(JwtStrategy);
 
 interface GetToken {
     (user: User): string;
 }
 
-export const getToken: GetToken = function(user: any): string {
+export const getTokenLogin: GetToken = function(user: User): string {
     console.log("User: " + JSON.stringify(user));
-    return jwt.sign(user, config.secretKey, {
-        expiresIn: 3600 //Expires in one hour
+    const payload: FullJWT['token']['payload'] = {
+        email: user.email,
+        firstname: user.firstname,
+        lastname: user.lastname,
+        permissions: {
+            passwordreset: true
+        }
+    }
+    return jwt.sign(payload, config.secretKey, {
+        expiresIn: 3600
     });
 };
+
+export const getTokenAccountVerification: GetToken = function(user: User): string {
+    console.log("User: " + JSON.stringify(user));
+    const payload: FullJWT['token']['payload'] = {
+        email: user.email,
+        firstname: user.firstname,
+        lastname: user.lastname,
+        permissions: {
+            verifyaccount: true
+        }
+    }
+    return jwt.sign(payload, config.secretKey, {
+        expiresIn: 3600
+    });
+};
+
+export const getTokenAccountRecovery: GetToken = function(user: User): string {
+    console.log("User: " + JSON.stringify(user));
+    const payload: FullJWT['token']['payload'] = {
+        email: user.email,
+        firstname: user.firstname,
+        lastname: user.lastname,
+        permissions: {
+            accountrecovery: true
+        }
+    }
+    return jwt.sign(payload, config.secretKey, {
+        expiresIn: 3600
+    });
+};
+
+export interface Permissions {
+    passwordreset?: boolean;
+    accountrecovery?: boolean;
+    verifyaccount?: boolean;
+}
 
 export interface FullJWT {
     token: {
@@ -41,6 +81,9 @@ export interface FullJWT {
         };
         payload: {
             email: string,
+            firstname: string,
+            lastname: string,
+            permissions: Permissions
         };
         signature: string;
     };
@@ -54,6 +97,9 @@ const EmptyToken: FullJWT["token"] = {
         },
         payload: {
             email: "",
+            firstname: "",
+            lastname: "",
+            permissions: {}
         },
         signature: ""
 }
@@ -67,44 +113,57 @@ function isFullJWT(obj: any): boolean {
     }
 }
 
-
-export const jwtFromHeader = function(req: Request): FullJWT {
-    const token: string | undefined = req.headers.authorization;
-    if (token) {
+export const jwtFromHeader = function (req: Request): FullJWT {
+    if (req.headers.authorization) {
         console.log("Before verify");
-        try {
-            console.log("token: " + token.split(' ')[1]);
-            const decryptedToken: string | object = jwt.verify(token.split(' ')[1], config.secretKey, {complete: true});
-            console.log("Made it past verify");
-            if (typeof decryptedToken === "object") {
-                console.log("Obj");
-                console.log("decryptedToken: " + JSON.stringify(decryptedToken));
-                const fullJWTcandidate: any = {token: decryptedToken, err: null}
-                if (isFullJWT(fullJWTcandidate)) {
-                    console.log("Is FullJWT");
-                    return fullJWTcandidate;
-                } else {
-                    console.log("Isn't FullJWT");
-                    const err: ResponseError = new Error("Bad JWT Token");
-                    err.status = 400;
-                    return {token: EmptyToken, err: err};
-                }
+        return jwtFromString(req.headers.authorization.split(' ')[1]);
+    } else {
+        const err: ResponseError = new Error("Bad JWT Token");
+        err.status = 400;
+        return {token: EmptyToken, err: err};
+    }
+}
+
+export const jwtFromCookie = function (req: Request): FullJWT {
+    if (req.cookies.token) {
+        console.log("Before verify");
+        return jwtFromString(req.cookies.token);
+    } else {
+        const err: ResponseError = new Error("Bad JWT Token");
+        err.status = 400;
+        return {token: EmptyToken, err: err};
+    }
+}
+
+export const jwtFromString = function(token: string): FullJWT {
+    try {
+        console.log("token: " + token);
+        const decryptedToken: string | object = jwt.verify(token, config.secretKey, {complete: true});
+        console.log("Made it past verify");
+        if (typeof decryptedToken === "object") {
+            console.log("Obj");
+            console.log("decryptedToken: " + JSON.stringify(decryptedToken));
+            const fullJWTcandidate: any = {token: decryptedToken, err: null}
+            if (isFullJWT(fullJWTcandidate)) {
+                console.log("Is FullJWT");
+                return fullJWTcandidate;
             } else {
-                console.log("String");
-                console.log("decryptedToken: " + decryptedToken);
+                console.log("Isn't FullJWT");
                 const err: ResponseError = new Error("Bad JWT Token");
                 err.status = 400;
                 return {token: EmptyToken, err: err};
             }
-        } catch {
-            console.log("No bueno")
-            const err: ResponseError = new Error("Invalid JWT");
-            err.status = 403;
+        } else {
+            console.log("String");
+            console.log("decryptedToken: " + decryptedToken);
+            const err: ResponseError = new Error("Bad JWT Token");
+            err.status = 400;
             return {token: EmptyToken, err: err};
         }
-    } else {
-        const err: ResponseError = new Error("Bad JWT Token");
-        err.status = 400;
+    } catch {
+        console.log("No bueno")
+        const err: ResponseError = new Error("Invalid JWT");
+        err.status = 403;
         return {token: EmptyToken, err: err};
     }
 }

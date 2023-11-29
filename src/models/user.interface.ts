@@ -1,6 +1,9 @@
 import RoommatePreferences from "./preferences.interface";
+import mongoose from "mongoose";
+import {ObjectId}  from 'mongodb';
 
 interface User {
+  _id: ObjectId;
   firstname: string;
   lastname: string;
   email: string;
@@ -9,7 +12,7 @@ interface User {
   gender: string;
   verified: boolean;
   usersLiked?: Array<string>;
-  usersToRec?: Array<string>;
+  usersSkipped?: Array<string>;
   preferences?: RoommatePreferences;
 }
 

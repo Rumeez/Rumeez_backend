@@ -7,10 +7,16 @@ import usersRouter from "./routers/usersRouter";
 import ResponseError from "./ResponseError";
 import { config } from "./config";
 import lookRouter from "./routers/lookRouter";
+<<<<<<< HEAD
 
 import http from 'http';
 import { initSocket } from './socket';
 
+=======
+import searchRouter from "./routers/searchRouter"
+import cookieParser from "cookie-parser"
+import cors from 'cors';
+>>>>>>> baca24d353f441bfbcb0124fbadde2b76ad124d4
 
 mongoose.connect(config.mongoUrl).then(
   () => {
@@ -30,6 +36,11 @@ app.use(morganMiddleware);
 app.use(passport.initialize());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
+app.use(cors({
+  origin: 'http://localhost:3000', 
+  methods: 'GET, POST, OPTIONS',
+}));
 
 const port = 8000;
 
@@ -42,6 +53,7 @@ import chatRouter from "./routers/chatRouter"; //weird import location due to so
 app.use('/user', usersRouter);
 app.use('/chat', chatRouter);
 app.use('/look', lookRouter);
+app.use('/search', searchRouter)
 
 app.use(function(err: ResponseError, req: Request, res: Response, next: NextFunction) {
     // set locals, only providing error in development
