@@ -22,7 +22,6 @@ io.on('connection', (socket: Socket) => {
         console.log(`User ${socket.id} joined chat ${chatId}`);
     });
 
-});
 
 const messageInput = "this is a test chat" //document.getElementById('name of element that contains the message to send')
 
