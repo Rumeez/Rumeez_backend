@@ -27,7 +27,11 @@ usersRouter.route('/')
                 if (user) {
                     res.statusCode = 200;
                     res.setHeader('Content-Type', 'application/json');
-                    res.json({email: user.email, firstname: user.firstname, lastname: user.lastname, verified: user.verified});
+                    res.json({email: user.email, 
+                              firstname: user.firstname, 
+                              lastname: user.lastname, 
+                              verified: user.verified, 
+                              chats: user.chats});
                     console.log("Successfully found user");
                 }
             }, function (err: ResponseError) { next(err) })
