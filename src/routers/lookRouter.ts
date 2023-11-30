@@ -39,9 +39,16 @@ lookRouter.route('/')
 
 lookRouter.route('/getuser/:userid')
    .get(authStrategy, async function (req: Request, res: Response, next: NextFunction): Promise<void> {
+    const validate: FullJWT = jwtFromCookie(req);
+    try{
     const userid = req.params.userid;
     const user = await userModel.findById(userid).exec();
-    res.json(user);
+    res.setHeader('Content-Type', 'application/json');
+    res.status(200).json(user);
+    }
+    catch (err) {
+      next(err);
+    }
    });
 
 

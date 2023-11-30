@@ -11,6 +11,9 @@ interface User extends mongoose.Document {
   telnum: string;
   gender: string;
   verified: boolean;
+  major: string;
+  year: string;
+  bio: string;
   usersLiked?: Array<string>;
   usersSkipped?: Array<string>;
   preferences?: RoommatePreferences;

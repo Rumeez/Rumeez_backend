@@ -27,7 +27,7 @@ usersRouter.route('/')
                 if (user) {
                     res.statusCode = 200;
                     res.setHeader('Content-Type', 'application/json');
-                    res.json({email: user.email, firstname: user.firstname, lastname: user.lastname, verified: user.verified});
+                    res.json({email: user.email, firstname: user.firstname, lastname: user.lastname, verified: user.verified, userId: user._id});
                     console.log("Successfully found user");
                 }
             }, function (err: ResponseError) { next(err) })
@@ -57,7 +57,7 @@ usersRouter.route('/login')
                                 res.setHeader('Content-Type', 'application/json');
                                 res.setHeader('Access-Control-Allow-Credentials', "true");
                                 res.cookie("token", token, {sameSite:'none', /*domain:'api.app.localhost',*/ secure:true, path:"/", maxAge:3600000});
-                                res.json({email: user.email, firstname: user.firstname, lastname: user.lastname, verified: user.verified});
+                                res.json({email: user.email, firstname: user.firstname, lastname: user.lastname, verified: user.verified, userId: user._id});
                             } else {
                                 res.sendStatus(403);
                             }
@@ -105,6 +105,8 @@ usersRouter.route('/signup')
                     next(err);
             });
     });
+
+
 
 usersRouter.route('/update-preferences')
     .post(authStrategy, function (req: Request, res: Response, next: NextFunction): void {
