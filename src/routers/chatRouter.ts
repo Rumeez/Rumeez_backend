@@ -28,10 +28,10 @@ io.on('connection', (socket: Socket) => {
 const messageInput = "this is a test chat" //document.getElementById('name of element that contains the message to send')
 
 
-async function addMessageToChat(chatId: string, userEmail: string,  message: string, next: NextFunction): Promise<void> {
+async function addMessageToChat(chatId: string, userName: string,  message: string, next: NextFunction): Promise<void> {
     chatModel.findByIdAndUpdate(
         chatId,
-        { $push: { messages: [userEmail, message] } },
+        { $push: { messages: [userName, message] } },
         { new: true }
     )
     .then(updatedChat =>{
@@ -73,11 +73,12 @@ async function joinChat(chatId: string, userId: string, next: NextFunction): Pro
 chatRouter.route('/send')
     .post(authStrategy, async (req: Request, res: Response, next: NextFunction) => {
         const chatData = req.body;
-        const userEmail = chatData.userEmail;
+        const userName = chatData.username;
         const chatId = chatData.chatId;
         const message = chatData.message;
         try {
-            addMessageToChat(chatId, userEmail, message, next);
+            console.log(userName);
+            addMessageToChat(chatId, userName, message, next);
             res.status(200).send("User sent message");
         } catch (error) {
             res.status(500).send("An error occurred");
