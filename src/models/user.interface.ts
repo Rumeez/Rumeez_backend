@@ -17,6 +17,7 @@ interface User extends mongoose.Document {
   usersLiked?: Array<string>;
   usersSkipped?: Array<string>;
   preferences?: RoommatePreferences;
+  chats: Array<string>
 }
 
 export default User;

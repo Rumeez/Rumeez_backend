@@ -59,6 +59,10 @@ const userSchema = new Schema<User>({
        
       type: preferencesModel.schema,
       required: false
+    },
+    chats: {
+        type: [String],
+        default: []
     }
 });
  

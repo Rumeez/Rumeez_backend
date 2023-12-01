@@ -27,7 +27,12 @@ usersRouter.route('/')
                 if (user) {
                     res.statusCode = 200;
                     res.setHeader('Content-Type', 'application/json');
-                    res.json({email: user.email, firstname: user.firstname, lastname: user.lastname, verified: user.verified, userId: user._id});
+                    res.json({email: user.email, 
+                              firstname: user.firstname, 
+                              lastname: user.lastname, 
+                              verified: user.verified, 
+                              chats: user.chats,
+                              userId: user._id});
                     console.log("Successfully found user");
                 }
             }, function (err: ResponseError) { next(err) })
@@ -178,7 +183,7 @@ usersRouter.route('/verify')
                                         Data: `Dear ${validate.token.payload.firstname},\n\n
                                                 This is the link you requested for account verification.\n\n
                                                 If you did not request account verification, you can safely ignore this email. \n\n
-                                                Verification link: http://localhost:3000/verification/${verificationToken}\n\n
+                                                Verification link: http://localhost:3000/verify/${verificationToken}\n\n
                                                 Best,
                                                 The Rumeez Dev Team`
                                     }
