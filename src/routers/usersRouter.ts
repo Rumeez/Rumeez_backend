@@ -31,7 +31,8 @@ usersRouter.route('/')
                               firstname: user.firstname, 
                               lastname: user.lastname, 
                               verified: user.verified, 
-                              chats: user.chats});
+                              chats: user.chats,
+                              userId: user._id});
                     console.log("Successfully found user");
                 }
             }, function (err: ResponseError) { next(err) })
@@ -61,7 +62,7 @@ usersRouter.route('/login')
                                 res.setHeader('Content-Type', 'application/json');
                                 res.setHeader('Access-Control-Allow-Credentials', "true");
                                 res.cookie("token", token, {sameSite:'none', /*domain:'api.app.localhost',*/ secure:true, path:"/", maxAge:3600000});
-                                res.json({email: user.email, firstname: user.firstname, lastname: user.lastname, verified: user.verified});
+                                res.json({email: user.email, firstname: user.firstname, lastname: user.lastname, verified: user.verified, userId: user._id});
                             } else {
                                 res.sendStatus(403);
                             }
@@ -109,6 +110,27 @@ usersRouter.route('/signup')
                     next(err);
             });
     });
+
+    usersRouter.route('/update-user-info')
+    .post(authStrategy,  function (req: Request, res: Response, next: NextFunction): void {
+        const validate: FullJWT = jwtFromCookie(req);
+        try {
+            console.log(req.body);
+            userModel.findOneAndUpdate(
+                { email: validate.token.payload.email },
+                {$set:{ firstname: req.body.firstname, lastname: req.body.lastname, bio: req.body.bio, gender: req.body.gender, year: req.body.year, major: req.body.major }}
+                ).exec()
+                .then(function (user: User | null) {
+                    console.log(user);
+                    res.sendStatus(200);
+                    console.log("Successfully found users");
+                }, function (err: ResponseError) { next(err) })
+                .catch(function (err: ResponseError) { next(err) });
+        } catch {
+            res.sendStatus(400);
+        }
+    });
+
 
 usersRouter.route('/update-preferences')
     .post(authStrategy, function (req: Request, res: Response, next: NextFunction): void {

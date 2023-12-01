@@ -34,6 +34,18 @@ const userSchema = new Schema<User>({
         type: Boolean,
         default: false
     },
+    major:{
+        type: String,
+        default: ""
+    },
+    year:{
+        type: String,
+        default: ""
+    },
+    bio:{
+        type: String,
+        default: ""
+    },
     usersLiked: {
         type: [String],
         default: []
@@ -42,6 +54,7 @@ const userSchema = new Schema<User>({
         type: [String],
         default: []
     },
+   
     preferences: {
        
       type: preferencesModel.schema,
