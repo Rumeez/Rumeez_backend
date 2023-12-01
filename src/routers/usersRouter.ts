@@ -183,7 +183,7 @@ usersRouter.route('/verify')
                                         Data: `Dear ${validate.token.payload.firstname},\n\n
                                                 This is the link you requested for account verification.\n\n
                                                 If you did not request account verification, you can safely ignore this email. \n\n
-                                                Verification link: http://localhost:3000/verification/${verificationToken}\n\n
+                                                Verification link: http://localhost:3000/verify/${verificationToken}\n\n
                                                 Best,
                                                 The Rumeez Dev Team`
                                     }
