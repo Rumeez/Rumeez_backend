@@ -12,7 +12,7 @@ import { config } from "../config";
 const searchRouter = express.Router();
 
 searchRouter.route('/')
-    .get(authStrategy, async function (req: Request, res: Response, next: NextFunction): Promise<void> {
+    .post(authStrategy, async function (req: Request, res: Response, next: NextFunction): Promise<void> {
        
         const validate: FullJWT = jwtFromCookie(req);
         try {
