@@ -232,7 +232,7 @@ usersRouter.route('/verify/confirm')
     });
 
 usersRouter.route('/accountrecovery')
-    .get((req: Request, res: Response, next: NextFunction): void => {
+    .post((req: Request, res: Response, next: NextFunction): void => {
         if (!req.body.email) {
             const err: ResponseError = new Error("No email provided");
             err.status = 400;
