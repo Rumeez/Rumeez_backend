@@ -91,7 +91,7 @@ chatRouter.route('/join')
         const { chatId, userId } = req.body;
         try {
             await joinChat(chatId, userId, next);
-            res.status(200).send("User joined chat");
+            res.status(200).send(chatId);
         } catch (error) {
             res.status(500).send("An error occurred");
         }
