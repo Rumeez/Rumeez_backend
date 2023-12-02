@@ -113,6 +113,21 @@ lookRouter.route('/like/:userid/:userToLikeId')
 async function rankDocuments( parameterDocument: User): Promise<{ [key: string]: number; }> {
     const rankedResults: { [key: string]: number } = {};
     const documents = await userModel.find({});
+    //if number of liked + skipped is all of the users, remove all skipped users and reshow those
+    const numTotalUsers = await userModel.countDocuments();
+    const numLiked = parameterDocument.usersLiked?.length ?? 0;
+    const numSkipped = parameterDocument.usersSkipped?.length ?? 0;
+    if (numLiked + numSkipped === numTotalUsers) {
+      try {
+        const userId = parameterDocument._id;
+        await userModel.findByIdAndUpdate(userId, { $set: { usersSkipped: [] } });
+    
+        console.log('usersSkipped array cleared successfully.');
+      } catch (error) {
+        console.error('Error clearing usersSkipped array:', error);
+      }
+    }
+
   
     documents.forEach((document) => {
       if (!(documentsAreEqual(document, parameterDocument)) && (!documentAlreadySkippedOrLiked(document, parameterDocument))) {
