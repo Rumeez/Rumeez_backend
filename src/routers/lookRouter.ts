@@ -40,6 +40,12 @@ lookRouter.route('/')
 lookRouter.route('/getuser/:userid')
    .get(authStrategy, async function (req: Request, res: Response, next: NextFunction): Promise<void> {
     const validate: FullJWT = jwtFromCookie(req);
+    if(req.params.userid =='undefined')
+      {
+        console.log('undefined in get user LOOK HERE');
+        res.status(500).send('undefined');
+        return;
+      }
     try{
     const userid = req.params.userid;
     const user = await userModel.findById(userid).exec();
@@ -86,6 +92,12 @@ lookRouter.route('/like/:userid/:userToLikeId')
       
       const userId = req.params.userid;
       const userToSkipId = req.params.userToSkipId;
+      if(userToSkipId == 'undefined')
+        {
+          console.log('undefined id in skip');
+          return;
+        }
+
       const user = await userModel.findById(userId).exec();
       console.log(user);
       const userToSkip = await userModel.findById(userToSkipId).exec();
